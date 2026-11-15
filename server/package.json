@@ -11,7 +11,8 @@
     "scripts": {
         "dev": "node  --watch server.ts",
         "start": "node server.ts",
-        "typecheck": "yarn tsc"
+        "typecheck": "yarn tsc",
+        "test": "node --import ./testing/setup.ts --test --watch"
     },
     "devDependencies": {
         "@types/cors": "^2.8.19",
