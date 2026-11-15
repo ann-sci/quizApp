@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { pool } from "../db.js";
-import type { TestContext } from "node:test";
+import type { Mock, MockTracker, TestContext } from "node:test";
 
 export function createMockRequest<Params>(
     params: Params,
@@ -48,8 +48,8 @@ export const runController = async <ReqParams extends Request["params"]>({
     requestParams,
     requestBody,
     result,
-}: RunControllerProps<ReqParams>): Promise<MockResponse> => {
-    testContext.mock.method(pool, "query", () => {
+}: RunControllerProps<ReqParams>) => {
+    const queryMock = testContext.mock.method(pool, "query", () => {
         if (result instanceof Error) throw result;
         return result;
     });
@@ -58,5 +58,5 @@ export const runController = async <ReqParams extends Request["params"]>({
 
     await controller(request, response);
 
-    return response;
+    return { response, queryMock };
 };

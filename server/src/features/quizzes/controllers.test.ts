@@ -42,14 +42,14 @@ describe("quizzes/controllers", () => {
 
         test("returns all quizzes", async (t) => {
             const quizzes = [quiz];
-            const response = await runGetQuizzes(t, { rows: quizzes });
+            const { response } = await runGetQuizzes(t, { rows: quizzes });
 
             assert.equal(response.statusCode, 200);
             assert.deepEqual(response.body, quizzes);
         });
 
         test("returns the error 500 when the database query fails", async (t) => {
-            const response = await runGetQuizzes(t, new Error());
+            const { response } = await runGetQuizzes(t, new Error());
 
             assert.equal(response.statusCode, 500);
             assert.deepEqual(response.body, {
@@ -72,14 +72,19 @@ describe("quizzes/controllers", () => {
             });
 
         test("returns the quiz with the requested id", async (t) => {
-            const response = await runGetQuiz(t, { id: "1" }, { rows: [quiz] });
+            const { response, queryMock } = await runGetQuiz(
+                t,
+                { id: "1" },
+                { rows: [quiz] },
+            );
 
             assert.equal(response.statusCode, 200);
             assert.deepEqual(response.body, quiz);
+            assert.deepEqual(queryMock.mock.calls[0].arguments[1], [quiz.id]);
         });
 
         test("returns 404 when the quiz does not exist", async (t) => {
-            const response = await runGetQuiz(
+            const { response } = await runGetQuiz(
                 t,
                 { id: "1" },
                 { rows: [], rowCount: 0 },
@@ -90,7 +95,7 @@ describe("quizzes/controllers", () => {
         });
 
         test("returns the error 500 when the database query fails", async (t) => {
-            const response = await runGetQuiz(t, { id: "1" }, new Error());
+            const { response } = await runGetQuiz(t, { id: "1" }, new Error());
 
             assert.equal(response.statusCode, 500);
             assert.deepEqual(response.body, { error: "Failed to fetch quiz" });
@@ -114,14 +119,16 @@ describe("quizzes/controllers", () => {
             });
 
         test("creates a quiz and returns the created quiz", async (t) => {
-            const response = await runCreateQuiz(t, { rows: [quiz] });
+            const { response, queryMock } = await runCreateQuiz(t, {
+                rows: [quiz],
+            });
 
             assert.equal(response.statusCode, 201);
             assert.deepEqual(response.body, quiz);
         });
 
         test("returns the error 500 when the database query fails", async (t) => {
-            const response = await runCreateQuiz(
+            const { response } = await runCreateQuiz(
                 t,
                 new Error("Request failed"),
             );
@@ -132,7 +139,14 @@ describe("quizzes/controllers", () => {
     });
 
     describe("updateQuiz", () => {
-        const updatedQuiz = { ...quiz, title: "Updated Title" };
+        const updatedTitle = "Updated Title";
+        const updatedDescription = "Updated Description";
+
+        const updatedQuiz: Quiz = {
+            id: 1,
+            title: updatedTitle,
+            description: updatedDescription,
+        };
 
         const runUpdateQuiz = (
             testContext: TestContext,
@@ -144,27 +158,38 @@ describe("quizzes/controllers", () => {
                 requestParams: { id: "1" },
                 result,
                 requestBody: {
-                    title: updatedQuiz.title,
-                    description: updatedQuiz.description,
+                    title: updatedTitle,
+                    description: updatedDescription,
                 },
             });
 
         test("updates a quiz and returns it", async (t) => {
-            const response = await runUpdateQuiz(t, { rows: [updatedQuiz] });
+            const { response, queryMock } = await runUpdateQuiz(t, {
+                rows: [updatedQuiz],
+            });
 
             assert.equal(response.statusCode, 200);
             assert.deepEqual(response.body, updatedQuiz);
+
+            assert.deepEqual(queryMock.mock.calls[0].arguments[1], [
+                updatedTitle,
+                updatedDescription,
+                1,
+            ]);
         });
 
         test("returns error 404 when the quiz doesn't exist", async (t) => {
-            const response = await runUpdateQuiz(t, { rows: [], rowCount: 0 });
+            const { response } = await runUpdateQuiz(t, {
+                rows: [],
+                rowCount: 0,
+            });
 
             assert.equal(response.statusCode, 404);
             assert.deepEqual(response.body, { error: "Quiz not found" });
         });
 
         test("returns the error 500 when the database query fails", async (t) => {
-            const response = await runUpdateQuiz(
+            const { response } = await runUpdateQuiz(
                 t,
                 new Error("Request failed"),
             );
@@ -187,21 +212,27 @@ describe("quizzes/controllers", () => {
             });
 
         test("deletes a quiz and returns it", async (t) => {
-            const response = await runDeleteQuiz(t, { rows: [quiz] });
+            const { response, queryMock } = await runDeleteQuiz(t, {
+                rows: [quiz],
+            });
 
             assert.equal(response.statusCode, 200);
             assert.deepEqual(response.body, quiz);
+            assert.deepEqual(queryMock.mock.calls[0].arguments[1], [quiz.id]);
         });
 
         test("returns error 404 when the quiz doesn't exist", async (t) => {
-            const response = await runDeleteQuiz(t, { rows: [], rowCount: 0 });
+            const { response } = await runDeleteQuiz(t, {
+                rows: [],
+                rowCount: 0,
+            });
 
             assert.equal(response.statusCode, 404);
             assert.deepEqual(response.body, { error: "Quiz not found" });
         });
 
         test("returns the error 500 when the database query fails", async (t) => {
-            const response = await runDeleteQuiz(
+            const { response } = await runDeleteQuiz(
                 t,
                 new Error("Request failed"),
             );
